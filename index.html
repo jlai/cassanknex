@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Cassanknex by azuqua</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Cassanknex</h1>
+      <h2 class="project-tagline">A CQL query builder written in the spirit of Knex</h2>
+      <a href="https://github.com/azuqua/cassanknex" class="btn">View on GitHub</a>
+      <a href="https://github.com/azuqua/cassanknex/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/azuqua/cassanknex/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <p><a href="https://npmjs.org/package/cassanknex"><img src="https://img.shields.io/npm/v/cassanknex.svg?style=flat" alt="NPM Version"></a>
+<a href="http://inch-ci.org/github/azuqua/cassanknex"><img src="http://inch-ci.org/github/azuqua/cassanknex.svg?branch=master&amp;style=shields" alt="Inline docs"></a>
+<a href="https://travis-ci.org/azuqua/cassanknex"><img src="https://travis-ci.org/azuqua/cassanknex.svg?branch=master&amp;style=flat" alt="Build Status"></a></p>
+
+<h1>
+<a id="cassanknex" class="anchor" href="#cassanknex" aria-hidden="true"><span class="octicon octicon-link"></span></a>CassanKnex</h1>
+
+<p>An Apache Cassandra CQL query builder with support for the DataStax NodeJS driver, written in the spirit of <a href="http://knexjs.org/">Knex</a> for <a href="http://docs.datastax.com/en/cql/3.1/cql/cql_reference/cqlReferenceTOC.html">CQL 3.1.x</a>.</p>
+
+<h2>
+<a id="index" class="anchor" href="#index" aria-hidden="true"><span class="octicon octicon-link"></span></a>Index</h2>
+
+<ul>
+<li><a href="#WhyCassanknex">Why Cassanknex</a></li>
+<li>
+<a href="#Usage">Usage</a>
+
+<ul>
+<li><a href="#GeneratingQueries">Generating Queries</a></li>
+<li><a href="#ExecutingQueries">Executing Queries</a></li>
+<li><a href="#Quickstart">Quick Start</a></li>
+<li><a href="#Debugging">Debugging Queries</a></li>
+<li><a href="#QueryExecutors">Query Executors (Examples)</a></li>
+<li>
+<a href="#QueryCommands">Query Commands (Examples)</a>
+
+<ul>
+<li><a href="#QueryCommands-Rows">Rows</a></li>
+<li><a href="#QueryCommands-ColumnFamilies">Column Families</a></li>
+<li><a href="#QueryCommands-Keyspaces">Keyspaces</a></li>
+</ul>
+</li>
+<li>
+<a href="#QueryModifiers">Query Modifiers</a>
+
+<ul>
+<li><a href="#QueryModifiers-Rows">Rows</a></li>
+<li><a href="#QueryModifiers-ColumnFamilies">Column Families</a></li>
+<li><a href="#QueryModifiers-Keyspaces">Keyspaces</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#ChangeLog">ChangeLog</a></li>
+</ul>
+
+<h2>
+<a id="why" class="anchor" href="#why" aria-hidden="true"><span class="octicon octicon-link"></span></a><a name="WhyCassanknex"></a>Why</h2>
+
+<p>CQL was purposefully designed to be SQL-esq to enhance ease of access for those familiar w/ relational databases
+while Knex is the canonical NodeJS query builder for SQL dialects; however, even given the lexical similarities, the difference
+between the usage of CQL vs SQL is significant enough that adding CQL as yet another Knex SQL dialect does not make sense.
+Thus, CassanKnex.</p>
+
+<h2>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a><a name="Usage"></a>Usage</h2>
+
+<p>CassanKnex can be used to execute queries against a Cassandra cluster via <a href="https://github.com/datastax/nodejs-driver"><code>cassandra-driver</code></a> (the official DataStax NodeJS driver) or as a simple CQL statement generator via the following relative instantiations:</p>
+
+<h3>
+<a id="as-a-query-generator" class="anchor" href="#as-a-query-generator" aria-hidden="true"><span class="octicon octicon-link"></span></a><a name="GeneratingQueries"></a>As a query generator</h3>
+
+<p>Compiled CQL statements can be retrieved at any time via the <code>cql</code> method.</p>
+
+<div class="highlight highlight-js"><pre><span class="pl-k">var</span> cassanKnex <span class="pl-k">=</span> <span class="pl-c1">require</span>(<span class="pl-s"><span class="pl-pds">"</span>cassanknex<span class="pl-pds">"</span></span>)();
+<span class="pl-k">var</span> qb <span class="pl-k">=</span> cassanKnex(<span class="pl-c1">KEYSPACE</span>).QUERY_COMMAND()
+          .QUERY_MODIFIER_1()
+          .
+          .
+          .QUERY_MODIFIER_N();
+
+<span class="pl-k">var</span> cql <span class="pl-k">=</span> qb.cql(); <span class="pl-c">// get the cql statement</span></pre></div>
+
+<p>Where <code>KEYSPACE</code> is the name of the relevant keyspace and
+<code>QUERY_COMMAND</code> and <code>QUERY_MODIFIER</code> are among the list of available <a href="#QueryCommands">Query Commands</a>  and <a href="#QueryModifiers">Query Modifiers</a>.</p>
+
+<h3>
+<a id="as-a-query-executor" class="anchor" href="#as-a-query-executor" aria-hidden="true"><span class="octicon octicon-link"></span></a><a name="ExecutingQueries"></a>As a query executor</h3>
+
+<p>Execution of a given query is performed by invoking either the <code>exec</code>, <code>stream</code> or <code>eachRow</code> methods
+(which are straight pass throughs to the DataStax driver's <code>execute</code>, <code>stream</code> and <code>eachRow</code> <a href="http://docs.datastax.com/en/drivers/nodejs/2.1/Client.html">methods</a>, respectively).</p>
+
+<div class="highlight highlight-js"><pre><span class="pl-k">var</span> cassanKnex <span class="pl-k">=</span> <span class="pl-c1">require</span>(<span class="pl-s"><span class="pl-pds">"</span>cassanknex<span class="pl-pds">"</span></span>)({
+  connection<span class="pl-k">:</span> {
+    contactPoints<span class="pl-k">:</span> [<span class="pl-s"><span class="pl-pds">"</span>LIST OF CONNECTION POINTS<span class="pl-pds">"</span></span>]
+  }
+});
+
+cassanKnex.on(<span class="pl-s"><span class="pl-pds">"</span>ready<span class="pl-pds">"</span></span>, <span class="pl-k">function</span> (<span class="pl-smi">err</span>) {
+
+  <span class="pl-k">if</span> (err)
+    <span class="pl-en">console</span><span class="pl-c1">.error</span>(<span class="pl-s"><span class="pl-pds">"</span>Error Connecting to Cassandra Cluster<span class="pl-pds">"</span></span>, err);
+  <span class="pl-k">else</span>
+    <span class="pl-en">console</span><span class="pl-c1">.log</span>(<span class="pl-s"><span class="pl-pds">"</span>Cassandra Connected<span class="pl-pds">"</span></span>);
+
+  <span class="pl-k">var</span> qb <span class="pl-k">=</span> cassanKnex(<span class="pl-c1">KEYSPACE</span>).QUERY_COMMAND()
+          .QUERY_MODIFIER_1()
+          .
+          .
+          .QUERY_MODIFIER_N();
+
+  <span class="pl-c">// pass through to the underlying DataStax nodejs-driver 'execute' method</span>
+
+  qb.<span class="pl-c1">exec</span>(<span class="pl-k">function</span>(<span class="pl-smi">err</span>, <span class="pl-smi">res</span>) {
+    <span class="pl-c">// do something w/ your query response</span>
+  });
+
+  <span class="pl-c">// OR pass through to the underlying DataStax nodejs-driver 'stream' method</span>
+
+  <span class="pl-k">var</span> <span class="pl-en">onReadable</span> <span class="pl-k">=</span> <span class="pl-k">function</span> () {
+      <span class="pl-c">// Readable is emitted as soon a row is received and parsed</span>
+      <span class="pl-k">var</span> row;
+      <span class="pl-k">while</span> (row <span class="pl-k">=</span> <span class="pl-v">this</span>.read()) {
+        <span class="pl-en">console</span><span class="pl-c1">.log</span>(row);
+        <span class="pl-c">// do something w/ the row response</span>
+      }
+    }
+    , <span class="pl-en">onEnd</span> <span class="pl-k">=</span> <span class="pl-k">function</span> () {
+      <span class="pl-c">// Stream ended, there aren't any more rows</span>
+      <span class="pl-en">console</span><span class="pl-c1">.log</span>(<span class="pl-s"><span class="pl-pds">"</span>query finished<span class="pl-pds">"</span></span>);
+    }
+    , <span class="pl-en">onError</span> <span class="pl-k">=</span> <span class="pl-k">function</span> (<span class="pl-smi">err</span>) {
+      <span class="pl-c">// Something went wrong: err is a response error from Cassandra</span>
+      <span class="pl-en">console</span><span class="pl-c1">.log</span>(<span class="pl-s"><span class="pl-pds">"</span>query error<span class="pl-pds">"</span></span>, err);
+    };
+
+  <span class="pl-c">// Invoke the stream method</span>
+  qb.stream({
+    <span class="pl-s"><span class="pl-pds">"</span>readable<span class="pl-pds">"</span></span><span class="pl-k">:</span> onReadable,
+    <span class="pl-s"><span class="pl-pds">"</span>end<span class="pl-pds">"</span></span><span class="pl-k">:</span> onEnd,
+    <span class="pl-s"><span class="pl-pds">"</span>error<span class="pl-pds">"</span></span><span class="pl-k">:</span> <span class="pl-c1">onError</span>
+  });
+
+  <span class="pl-c">// OR pass through to the underlying DataStax nodejs-driver 'eachRow' method</span>
+
+  <span class="pl-k">var</span> <span class="pl-en">rowCallback</span> <span class="pl-k">=</span> <span class="pl-k">function</span> (<span class="pl-smi">n</span>, <span class="pl-smi">row</span>) {
+      <span class="pl-c">// The callback will be invoked per each row as soon as they are received</span>
+      <span class="pl-en">console</span><span class="pl-c1">.log</span>(row);
+      <span class="pl-c">// do something w/ the row response</span>
+    }
+    , <span class="pl-en">errorCb</span> <span class="pl-k">=</span> <span class="pl-k">function</span> (<span class="pl-smi">err</span>) {
+      <span class="pl-c">// Something went wrong: err is a response error from Cassandra</span>
+      <span class="pl-en">console</span><span class="pl-c1">.log</span>(<span class="pl-s"><span class="pl-pds">"</span>query error<span class="pl-pds">"</span></span>, err);
+    };
+
+  <span class="pl-c">// Invoke the eachRow method</span>
+  qb.eachRow(rowCallback, errorCb);
+});</pre></div>
+
+<h4>
+<a id="quickstart" class="anchor" href="#quickstart" aria-hidden="true"><span class="octicon octicon-link"></span></a><a name="Quickstart"></a>Quickstart</h4>
+
+<div class="highlight highlight-js"><pre><span class="pl-k">var</span> cassanKnex <span class="pl-k">=</span> <span class="pl-c1">require</span>(<span class="pl-s"><span class="pl-pds">"</span>cassanknex<span class="pl-pds">"</span></span>)({
+  connection<span class="pl-k">:</span> { <span class="pl-c">// default is 'undefined'</span>
+    contactPoints<span class="pl-k">:</span> [<span class="pl-s"><span class="pl-pds">"</span>10.0.0.2<span class="pl-pds">"</span></span>]
+  },
+  exec<span class="pl-k">:</span> { <span class="pl-c">// default is '{}'</span>
+    prepare<span class="pl-k">:</span> <span class="pl-c1">false</span> <span class="pl-c">// default is 'true'</span>
+  }
+});
+
+cassanKnex.on(<span class="pl-s"><span class="pl-pds">"</span>ready<span class="pl-pds">"</span></span>, <span class="pl-k">function</span> (<span class="pl-smi">err</span>) {
+
+  <span class="pl-k">if</span> (err)
+    <span class="pl-en">console</span><span class="pl-c1">.error</span>(<span class="pl-s"><span class="pl-pds">"</span>Error Connecting to Cassandra Cluster<span class="pl-pds">"</span></span>, err);
+  <span class="pl-k">else</span> {
+    <span class="pl-en">console</span><span class="pl-c1">.log</span>(<span class="pl-s"><span class="pl-pds">"</span>Cassandra Connected<span class="pl-pds">"</span></span>);
+
+  <span class="pl-k">var</span> qb(<span class="pl-s"><span class="pl-pds">"</span>keyspace<span class="pl-pds">"</span></span>).<span class="pl-c1">select</span>(<span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>baz<span class="pl-pds">"</span></span>)
+    .where(<span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>=<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span>)
+    .orWhere(<span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>in<span class="pl-pds">"</span></span>, [<span class="pl-s"><span class="pl-pds">"</span>2<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>3<span class="pl-pds">"</span></span>])
+    .orWhere(<span class="pl-s"><span class="pl-pds">"</span>baz<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>=<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span>)
+    .andWhere(<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>IN<span class="pl-pds">"</span></span>, [<span class="pl-s"><span class="pl-pds">"</span>baz<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span>])
+    .limit(<span class="pl-c1">10</span>)
+    .from(<span class="pl-s"><span class="pl-pds">"</span>table<span class="pl-pds">"</span></span>)
+    .<span class="pl-c1">exec</span>(<span class="pl-k">function</span>(<span class="pl-smi">err</span>, <span class="pl-smi">res</span>) {
+
+      <span class="pl-c">// executes query :</span>
+      <span class="pl-c">//  "SELECT id,foo,bar,baz FROM keyspace.table</span>
+      <span class="pl-c">//    WHERE id = ? OR id in (?, ?)</span>
+      <span class="pl-c">//    OR baz = ? AND foo IN (?, ?)</span>
+      <span class="pl-c">//    LIMIT 10;"</span>
+      <span class="pl-c">// with bindings array  : [ '1', '2', '3', 'bar', 'baz', 'bar' ]</span>
+
+      <span class="pl-k">if</span> (err)
+        <span class="pl-en">console</span><span class="pl-c1">.error</span>(<span class="pl-s"><span class="pl-pds">"</span>error<span class="pl-pds">"</span></span>, err);
+      <span class="pl-k">else</span>
+        <span class="pl-en">console</span><span class="pl-c1">.log</span>(<span class="pl-s"><span class="pl-pds">"</span>res<span class="pl-pds">"</span></span>, res);
+
+    });
+  }
+});
+</pre></div>
+
+<h4>
+<a id="debugging" class="anchor" href="#debugging" aria-hidden="true"><span class="octicon octicon-link"></span></a><a name="Debugging"></a>Debugging</h4>
+
+<p>To enable <code>debug</code> mode pass <code>{ debug: true }</code> into the CassanKnex <code>require</code> statement, e.g.</p>
+
+<pre><code>var cassanKnex = require("cassanknex")({ debug: true });
+
+</code></pre>
+
+<p>When <code>debug</code> is enabled the query object will be logged upon execution,
+and you'll receive two informational components provided to ease the act of debugging:</p>
+
+<ol>
+<li>
+<code>_queryPhases</code>:
+
+<ul>
+<li>An array showing the state of the query string at each step of it's compilation.</li>
+</ul>
+</li>
+<li>
+<code>_methodStack</code>:
+
+<ul>
+<li>An array showing the methods called throughout the modification lifespan of the query object.
+You'll notice that the 'compiling' method is called after each modification in this stack, that's due to
+re-compiling the query statement (and pushing the result into <code>_queryPhases</code>) at each step, when <code>debug == false</code>
+the <code>_cql</code> query statement and accompanying <code>_bindings</code> array are not created until either <code>qb.cql()</code> or <code>qb.exec()</code>
+are called.</li>
+</ul>
+</li>
+</ol>
+
+<p>So you'll see something akin to the following <code>insert</code> statement upon invoking either <code>qb.cql()</code> or <code>qb.exec()</code>:</p>
+
+<div class="highlight highlight-js"><pre><span class="pl-k">var</span> values <span class="pl-k">=</span> {
+  <span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>
+  , <span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>baz<span class="pl-pds">"</span></span>
+  , <span class="pl-s"><span class="pl-pds">"</span>baz<span class="pl-pds">"</span></span><span class="pl-k">:</span> [<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span>]
+};
+<span class="pl-k">var</span> qb <span class="pl-k">=</span> cassanknex(<span class="pl-s"><span class="pl-pds">"</span>cassanKnexy<span class="pl-pds">"</span></span>);
+qb.insert(values)
+      .usingTimestamp(<span class="pl-c1">250000</span>)
+      .usingTTL(<span class="pl-c1">50000</span>)
+      .into(<span class="pl-s"><span class="pl-pds">"</span>columnFamily<span class="pl-pds">"</span></span>)
+      .cql();
+
+<span class="pl-c">// =&gt;</span>
+{ _debug<span class="pl-k">:</span> <span class="pl-c1">true</span>,
+  _dialect<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>cql<span class="pl-pds">'</span></span>,
+  _keyspace<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>cassanKnexy<span class="pl-pds">'</span></span>,
+  _columnFamily<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>columnFamily<span class="pl-pds">'</span></span>,
+  _component<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>query<span class="pl-pds">'</span></span>,
+  _methodStack<span class="pl-k">:</span>
+   [ <span class="pl-s"><span class="pl-pds">'</span>insert<span class="pl-pds">'</span></span>,
+     <span class="pl-s"><span class="pl-pds">'</span>usingTimestamp<span class="pl-pds">'</span></span>,
+     <span class="pl-s"><span class="pl-pds">'</span>insert<span class="pl-pds">'</span></span>,
+     <span class="pl-s"><span class="pl-pds">'</span>usingTTL<span class="pl-pds">'</span></span>,
+     <span class="pl-s"><span class="pl-pds">'</span>insert<span class="pl-pds">'</span></span>,
+     <span class="pl-s"><span class="pl-pds">'</span>table<span class="pl-pds">'</span></span>,
+     <span class="pl-s"><span class="pl-pds">'</span>insert<span class="pl-pds">'</span></span> ],
+  _queryPhases<span class="pl-k">:</span>
+   [ <span class="pl-s"><span class="pl-pds">'</span>INSERT INTO  (id,bar,baz) VALUES (?, ?, ?);<span class="pl-pds">'</span></span>,
+     <span class="pl-s"><span class="pl-pds">'</span>INSERT INTO  (id,bar,baz) VALUES (?, ?, ?) USING TIMESTAMP ?;<span class="pl-pds">'</span></span>,
+     <span class="pl-s"><span class="pl-pds">'</span>INSERT INTO  (id,bar,baz) VALUES (?, ?, ?) USING TIMESTAMP ? AND USING TTL ?;<span class="pl-pds">'</span></span>,
+     <span class="pl-s"><span class="pl-pds">'</span>INSERT INTO cassanKnexy.columnFamily (id,bar,baz) VALUES (?, ?, ?) USING TIMESTAMP ? AND USING TTL ?;<span class="pl-pds">'</span></span> ],
+  _cql<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>INSERT INTO cassanKnexy.columnFamily (id,bar,baz) VALUES (?, ?, ?) USING TIMESTAMP ? AND USING TTL ?;<span class="pl-pds">'</span></span>,
+  _bindings<span class="pl-k">:</span> [ <span class="pl-s"><span class="pl-pds">'</span>foo<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>baz<span class="pl-pds">'</span></span>, [ <span class="pl-s"><span class="pl-pds">'</span>foo<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>bar<span class="pl-pds">'</span></span> ], <span class="pl-c1">250000</span>, <span class="pl-c1">50000</span> ],
+  _statements<span class="pl-k">:</span>
+   [ { grouping<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>compiling<span class="pl-pds">'</span></span>, type<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>insert<span class="pl-pds">'</span></span>, value<span class="pl-k">:</span> [<span class="pl-c1">Object</span>] },
+     { grouping<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>using<span class="pl-pds">'</span></span>, type<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>usingTimestamp<span class="pl-pds">'</span></span>, val<span class="pl-k">:</span> <span class="pl-c1">250000</span> },
+     { grouping<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>using<span class="pl-pds">'</span></span>, type<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>usingTTL<span class="pl-pds">'</span></span>, val<span class="pl-k">:</span> <span class="pl-c1">50000</span> } ],
+  ... }</pre></div>
+
+<blockquote>
+<p>While fuller documentation for all methods is in the works, <strong>the <a href="./tests">test files</a> provide thorough examples as to method usage</strong>.</p>
+</blockquote>
+
+<h4>
+<a id="query-executors" class="anchor" href="#query-executors" aria-hidden="true"><span class="octicon octicon-link"></span></a><a name="QueryExecutors"></a>Query Executors</h4>
+
+<blockquote>
+<p>All methods take an optional <code>options</code> object as the first argument in the call signature; if provided, the options will be passed through to the corresponding <code>cassandra-driver</code> call.</p>
+</blockquote>
+
+<ul>
+<li>
+<p>exec - <em>execute a query and return the response via a callback</em>:</p>
+
+<div class="highlight highlight-js"><pre><span class="pl-k">var</span> item <span class="pl-k">=</span> {
+  foo<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span>,
+  bar<span class="pl-k">:</span> [<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>baz<span class="pl-pds">"</span></span>]
+};
+<span class="pl-k">var</span> qb <span class="pl-k">=</span> cassanKnex(<span class="pl-s"><span class="pl-pds">"</span>cassanKnexy<span class="pl-pds">"</span></span>)
+  .insert(item)
+  .into(<span class="pl-s"><span class="pl-pds">"</span>columnFamily<span class="pl-pds">"</span></span>)
+  .<span class="pl-c1">exec</span>(<span class="pl-k">function</span>(<span class="pl-smi">err</span>, <span class="pl-smi">result</span>) {
+    <span class="pl-c">// do something w/ your err/result</span>
+  });
+
+  <span class="pl-c">// w/ options</span>
+  qb.<span class="pl-c1">exec</span>({ prepare<span class="pl-k">:</span> <span class="pl-c1">false</span> }, <span class="pl-k">function</span>(<span class="pl-smi">err</span>, <span class="pl-smi">result</span>) {
+     <span class="pl-c">// do something w/ your err/result</span>
+   });</pre></div>
+</li>
+<li>
+<p>eachRow - <em>execute a query and invoke a callback as each row is received</em>:</p>
+
+<div class="highlight highlight-js"><pre><span class="pl-k">var</span> <span class="pl-en">rowCallback</span> <span class="pl-k">=</span> <span class="pl-k">function</span> (<span class="pl-smi">n</span>, <span class="pl-smi">row</span>) {
+    <span class="pl-c">// Readable is emitted as soon a row is received and parsed</span>
+  }
+  , <span class="pl-en">errorCallback</span> <span class="pl-k">=</span> <span class="pl-k">function</span> (<span class="pl-smi">err</span>) {
+    <span class="pl-c">// Something went wrong: err is a response error from Cassandra</span>
+  };
+
+<span class="pl-k">var</span> qb <span class="pl-k">=</span> cassanKnex(<span class="pl-s"><span class="pl-pds">"</span>cassanKnexy<span class="pl-pds">"</span></span>)
+  .<span class="pl-c1">select</span>()
+  .from(<span class="pl-s"><span class="pl-pds">"</span>columnFamily<span class="pl-pds">"</span></span>);
+
+<span class="pl-c">// Invoke the eachRow method</span>
+qb.eachRow(rowCallback, errorCallback);</pre></div>
+</li>
+<li>
+<p>stream - <em>execute a query and stream each row as it is received</em>:</p>
+
+<div class="highlight highlight-js"><pre><span class="pl-k">var</span> <span class="pl-en">onReadable</span> <span class="pl-k">=</span> <span class="pl-k">function</span> () {
+    <span class="pl-c">// Readable is emitted as soon a row is received and parsed</span>
+    <span class="pl-k">var</span> row;
+    <span class="pl-k">while</span> (row <span class="pl-k">=</span> <span class="pl-v">this</span>.read()) {
+      <span class="pl-c">// do something w/ your row</span>
+    }
+  }
+  , <span class="pl-en">onEnd</span> <span class="pl-k">=</span> <span class="pl-k">function</span> () {
+    <span class="pl-c">// Stream ended, there aren't any more rows</span>
+  }
+  , <span class="pl-en">onError</span> <span class="pl-k">=</span> <span class="pl-k">function</span> (<span class="pl-smi">err</span>) {
+    <span class="pl-c">// Something went wrong: err is a response error from Cassandra</span>
+  };
+
+<span class="pl-k">var</span> qb <span class="pl-k">=</span> cassanKnex(<span class="pl-s"><span class="pl-pds">"</span>cassanKnexy<span class="pl-pds">"</span></span>)
+  .<span class="pl-c1">select</span>()
+  .from(<span class="pl-s"><span class="pl-pds">"</span>columnFamily<span class="pl-pds">"</span></span>);
+
+<span class="pl-c">// Invoke the stream method</span>
+qb.stream({
+  <span class="pl-s"><span class="pl-pds">"</span>readable<span class="pl-pds">"</span></span><span class="pl-k">:</span> onReadable,
+  <span class="pl-s"><span class="pl-pds">"</span>end<span class="pl-pds">"</span></span><span class="pl-k">:</span> onEnd,
+  <span class="pl-s"><span class="pl-pds">"</span>error<span class="pl-pds">"</span></span><span class="pl-k">:</span> <span class="pl-c1">onError</span>
+});</pre></div>
+</li>
+</ul>
+
+<h4>
+<a id="query-commands" class="anchor" href="#query-commands" aria-hidden="true"><span class="octicon octicon-link"></span></a><a name="QueryCommands"></a>Query Commands</h4>
+
+<h5>
+<a id="for-standard-row-queries" class="anchor" href="#for-standard-row-queries" aria-hidden="true"><span class="octicon octicon-link"></span></a><a name="QueryCommands-Rows"></a><em>For standard (row) queries</em>:</h5>
+
+<ul>
+<li>
+<p>insert - <em>compile an <strong>insert</strong> query string</em></p>
+
+<div class="highlight highlight-js"><pre>    <span class="pl-k">var</span> qb <span class="pl-k">=</span> cassanKnex(<span class="pl-s"><span class="pl-pds">"</span>cassanKnexy<span class="pl-pds">"</span></span>)
+      , values <span class="pl-k">=</span> {
+        <span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>
+        , <span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>baz<span class="pl-pds">"</span></span>
+        , <span class="pl-s"><span class="pl-pds">"</span>baz<span class="pl-pds">"</span></span><span class="pl-k">:</span> [<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span>]
+      };
+    qb.insert(values)
+      .usingTimestamp(<span class="pl-c1">250000</span>)
+      .usingTTL(<span class="pl-c1">50000</span>)
+      .into(<span class="pl-s"><span class="pl-pds">"</span>columnFamily<span class="pl-pds">"</span></span>);
+
+    <span class="pl-c">// =&gt; INSERT INTO cassanKnexy.columnFamily (id,bar,baz)</span>
+    <span class="pl-c">//      VALUES (?, ?, ?)</span>
+    <span class="pl-c">//      USING TIMESTAMP ?</span>
+    <span class="pl-c">//      AND USING TTL ?;</span></pre></div>
+</li>
+<li>
+<p>select - <em>compile a <strong>select OR select as</strong> query string</em></p>
+
+<ul>
+<li>
+<p>select all columns for a given query:</p>
+
+<div class="highlight highlight-js"><pre><span class="pl-k">var</span> qb <span class="pl-k">=</span> cassanKnex(<span class="pl-s"><span class="pl-pds">"</span>cassanKnexy<span class="pl-pds">"</span></span>);
+qb.<span class="pl-c1">select</span>(<span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>baz<span class="pl-pds">"</span></span>)
+  .where(<span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>=<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span>)
+  .orWhere(<span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>in<span class="pl-pds">"</span></span>, [<span class="pl-s"><span class="pl-pds">"</span>2<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>3<span class="pl-pds">"</span></span>])
+  .orWhere(<span class="pl-s"><span class="pl-pds">"</span>baz<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>=<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span>)
+  .andWhere(<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>IN<span class="pl-pds">"</span></span>, [<span class="pl-s"><span class="pl-pds">"</span>baz<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span>])
+  .limit(<span class="pl-c1">10</span>)
+  .from(<span class="pl-s"><span class="pl-pds">"</span>columnFamily<span class="pl-pds">"</span></span>);
+
+<span class="pl-c">// =&gt; SELECT id,foo,bar,baz FROM cassanKnexy.columnFamily</span>
+<span class="pl-c">//      WHERE id = ?</span>
+<span class="pl-c">//      OR id in (?, ?)</span>
+<span class="pl-c">//      OR baz = ?</span>
+<span class="pl-c">//      AND foo IN (?, ?)</span>
+<span class="pl-c">//      LIMIT ?;</span></pre></div>
+</li>
+<li>
+<p>'select as' specified columns:</p>
+
+<div class="highlight highlight-js"><pre><span class="pl-k">var</span> qb <span class="pl-k">=</span> cassanKnex(<span class="pl-s"><span class="pl-pds">"</span>cassanKnexy<span class="pl-pds">"</span></span>);
+qb.<span class="pl-c1">select</span>({<span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>})
+  .from(<span class="pl-s"><span class="pl-pds">"</span>columnFamily<span class="pl-pds">"</span></span>);
+
+<span class="pl-c">// =&gt; SELECT id AS foo FROM cassanKnexy.columnFamily;</span></pre></div>
+</li>
+</ul>
+</li>
+<li>
+<p>update - <em>compile an <strong>update</strong> query string</em></p>
+
+<ul>
+<li>simple set column values:</li>
+</ul>
+
+<div class="highlight highlight-js"><pre>  <span class="pl-k">var</span> qb <span class="pl-k">=</span> cassanKnex(<span class="pl-s"><span class="pl-pds">"</span>cassanKnexy<span class="pl-pds">"</span></span>);
+  qb.update(<span class="pl-s"><span class="pl-pds">"</span>columnFamily<span class="pl-pds">"</span></span>)
+    .set(<span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>)
+    .set(<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span>)
+    .where(<span class="pl-s"><span class="pl-pds">"</span>foo[bar]<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>=<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>baz<span class="pl-pds">"</span></span>)
+    .where(<span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>in<span class="pl-pds">"</span></span>, [<span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>3<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>5<span class="pl-pds">"</span></span>]);
+
+  <span class="pl-c">// =&gt; UPDATE cassanKnexy.columnFamily</span>
+  <span class="pl-c">//      SET bar = ?,foo = ?</span>
+  <span class="pl-c">//      WHERE foo[bar] = ?</span>
+  <span class="pl-c">//      AND id in (?, ?, ?, ?, ?);</span></pre></div>
+
+<ul>
+<li>set column values using object parameters:</li>
+</ul>
+
+<div class="highlight highlight-js"><pre><span class="pl-k">var</span> qb <span class="pl-k">=</span> cassanKnex(<span class="pl-s"><span class="pl-pds">"</span>cassanKnexy<span class="pl-pds">"</span></span>);
+qb.update(<span class="pl-s"><span class="pl-pds">"</span>columnFamily<span class="pl-pds">"</span></span>)
+  .set({
+    <span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>baz<span class="pl-pds">"</span></span>,
+    <span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span><span class="pl-k">:</span> [<span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>baz<span class="pl-pds">"</span></span>]
+  })
+  .where(<span class="pl-s"><span class="pl-pds">"</span>foo[bar]<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>=<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>baz<span class="pl-pds">"</span></span>)
+  .where(<span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>in<span class="pl-pds">"</span></span>, [<span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>3<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>5<span class="pl-pds">"</span></span>]);
+
+<span class="pl-c">// =&gt; UPDATE cassanKnexy.columnFamily</span>
+<span class="pl-c">//      SET bar = ?,foo = ?</span>
+<span class="pl-c">//      WHERE foo[bar] = ?</span>
+<span class="pl-c">//      AND id in (?, ?, ?, ?, ?);</span></pre></div>
+</li>
+<li>
+<p>delete - <em>compile a <strong>delete</strong> query string</em></p>
+
+<ul>
+<li>
+<p>delete all columns for a given row:</p>
+
+<div class="highlight highlight-js"><pre>  <span class="pl-k">var</span> qb <span class="pl-k">=</span> cassanknex(<span class="pl-s"><span class="pl-pds">"</span>cassanKnexy<span class="pl-pds">"</span></span>);
+  qb.delete()
+    .from(<span class="pl-s"><span class="pl-pds">"</span>columnFamily<span class="pl-pds">"</span></span>)
+    .where(<span class="pl-s"><span class="pl-pds">"</span>foo[bar]<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>=<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>baz<span class="pl-pds">"</span></span>)
+    .where(<span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>in<span class="pl-pds">"</span></span>, [<span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>3<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>5<span class="pl-pds">"</span></span>]);
+
+  <span class="pl-c">// =&gt; DELETE  FROM cassanKnexy.columnFamily</span>
+  <span class="pl-c">//      WHERE foo[bar] = ?</span>
+  <span class="pl-c">//      AND id in (?, ?, ?, ?, ?);</span></pre></div>
+</li>
+<li>
+<p>delete specified columns for a given row:</p>
+
+<div class="highlight highlight-js"><pre>  <span class="pl-k">var</span> qb <span class="pl-k">=</span> cassanknex(<span class="pl-s"><span class="pl-pds">"</span>cassanKnexy<span class="pl-pds">"</span></span>);
+  qb.delete([<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span>])
+  <span class="pl-c">// OR</span>
+  qb.delete(<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span>)
+
+    .from(<span class="pl-s"><span class="pl-pds">"</span>columnFamily<span class="pl-pds">"</span></span>)
+    .where(<span class="pl-s"><span class="pl-pds">"</span>foo[bar]<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>=<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>baz<span class="pl-pds">"</span></span>)
+    .where(<span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>in<span class="pl-pds">"</span></span>, [<span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>3<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>5<span class="pl-pds">"</span></span>]);
+
+  <span class="pl-c">// =&gt; DELETE foo,bar FROM cassanKnexy.columnFamily</span>
+  <span class="pl-c">//      WHERE foo[bar] = ?</span>
+  <span class="pl-c">//      AND id in (?, ?, ?, ?, ?);</span></pre></div>
+</li>
+</ul>
+</li>
+</ul>
+
+<h5>
+<a id="for-column-family-queries" class="anchor" href="#for-column-family-queries" aria-hidden="true"><span class="octicon octicon-link"></span></a><a name="QueryCommands-ColumnFamilies"></a><em>For column family queries</em>:</h5>
+
+<ul>
+<li>alterColumnFamily</li>
+<li>createColumnFamily</li>
+<li>createColumnFamilyIfNotExists</li>
+<li>dropColumnFamily</li>
+<li>dropColumnFamilyIfExists</li>
+<li>createIndex</li>
+</ul>
+
+<h5>
+<a id="for-keyspace-queries" class="anchor" href="#for-keyspace-queries" aria-hidden="true"><span class="octicon octicon-link"></span></a><a name="QueryCommands-Keyspaces"></a><em>For keyspace queries</em>:</h5>
+
+<ul>
+<li>alterKeyspace</li>
+<li>createKeyspace</li>
+<li>createKeyspaceIfNotExists</li>
+<li>dropKeyspace</li>
+<li>dropKeyspaceIfExists</li>
+</ul>
+
+<h4>
+<a id="query-modifiers" class="anchor" href="#query-modifiers" aria-hidden="true"><span class="octicon octicon-link"></span></a><a name="QueryModifiers"></a>Query Modifiers</h4>
+
+<h5>
+<a id="for-standard-row-queries-1" class="anchor" href="#for-standard-row-queries-1" aria-hidden="true"><span class="octicon octicon-link"></span></a><a name="QueryModifiers-Rows"></a><em>For standard (row) queries</em>:</h5>
+
+<ul>
+<li>from</li>
+<li>into</li>
+<li>where</li>
+<li>andWhere</li>
+<li>orWhere</li>
+<li>set</li>
+<li>if</li>
+<li>ifExists</li>
+<li>ifNotExists</li>
+<li>usingTTL</li>
+<li>usingTimestamp</li>
+<li>limit</li>
+</ul>
+
+<h5>
+<a id="for-column-family-queries-1" class="anchor" href="#for-column-family-queries-1" aria-hidden="true"><span class="octicon octicon-link"></span></a><a name="QueryModifiers-ColumnFamilies"></a><em>For column family queries</em>:</h5>
+
+<ul>
+<li>alter</li>
+<li>drop</li>
+<li>rename</li>
+<li>primary</li>
+<li>list</li>
+<li>set</li>
+<li>decimal</li>
+<li>boolean</li>
+<li>blob</li>
+<li>timestamp</li>
+<li>inet</li>
+<li>bigint</li>
+<li>counter</li>
+<li>double</li>
+<li>int</li>
+<li>float</li>
+<li>map</li>
+<li>ascii</li>
+<li>text</li>
+<li>timeuuid</li>
+<li>uuid</li>
+<li>varchar</li>
+<li>withCaching</li>
+<li>withCompression</li>
+<li>withCompaction</li>
+<li>withClusteringOrderBy</li>
+</ul>
+
+<h5>
+<a id="for-keyspace-queries-1" class="anchor" href="#for-keyspace-queries-1" aria-hidden="true"><span class="octicon octicon-link"></span></a><a name="QueryModifiers-Keyspaces"></a><em>For keyspace queries</em>:</h5>
+
+<ul>
+<li>withNetworkTopologyStrategy</li>
+<li>withSimpleStrategy</li>
+<li>withDurableWrites</li>
+</ul>
+
+<h4>
+<a id="changelog" class="anchor" href="#changelog" aria-hidden="true"><span class="octicon octicon-link"></span></a><a name="ChangeLog"></a>ChangeLog</h4>
+
+<ul>
+<li>1.6.0
+
+<ul>
+<li>Add <code>options</code> support for <code>eachRow</code> per issue #8.</li>
+</ul>
+</li>
+<li>1.5.1, 1.5.2
+
+<ul>
+<li>OMG DOCS!</li>
+</ul>
+</li>
+<li>1.5.0
+
+<ul>
+<li>Add QueryCommand <code>delete</code>.</li>
+</ul>
+</li>
+<li>1.4.0
+
+<ul>
+<li>Add support for object style <code>set</code> calls; e.g. <code>.set(&lt;Object := {&lt;String&gt;: &lt;Mixed&gt;, ...}&gt;)</code>.</li>
+</ul>
+</li>
+<li>1.3.0
+
+<ul>
+<li>Add support for the DataStax driver <code>eachRow</code> method.</li>
+</ul>
+</li>
+<li>1.2.0
+
+<ul>
+<li>Add support for the DataStax driver <code>stream</code> method.</li>
+</ul>
+</li>
+<li>1.1.0
+
+<ul>
+<li>Add QueryCommand <code>createIndex</code>.</li>
+<li>Add QueryModifier <code>allowFiltering</code>.</li>
+</ul>
+</li>
+</ul>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/azuqua/cassanknex">Cassanknex</a> is maintained by <a href="https://github.com/azuqua">azuqua</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
+
