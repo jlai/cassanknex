@@ -10,8 +10,7 @@ var _ = require("lodash")
   , _package = require("./package.json")
   , Client = require("./Client");
 
-var cassandra = null
-  , duckType = "[Object CassanKnex]";
+var duckType = "[Object CassanKnex]";
 
 /**
  * Constructor object, creates and returns a new cassanknex client
@@ -30,7 +29,7 @@ function CassanKnex() {
  * @returns {cassanKnex}
  */
 CassanKnex.initialize = function (config) {
-
+  var cassandra = null;
   var EventEmitter = require('events').EventEmitter;
 
   function cassanKnex(keyspace, table) {
@@ -156,9 +155,9 @@ function _attachExecMethod(qb) {
       _cb = _.noop;
     }
 
-    if (cassandra !== null && cassandra.connected) {
+    if (_isConnected(qb)) {
       var cql = qb.cql();
-      cassandra.execute(cql, qb.bindings(), _options, _cb);
+      qb._cassandra.execute(cql, qb.bindings(), _options, _cb);
     }
     else {
       _cb(new Error("Cassandra client is not initialized."));
@@ -196,9 +195,9 @@ function _attachStreamMethod(qb) {
       , onEnd = _cbs.end || _.noop
       , onError = _cbs.error || _.noop;
 
-    if (cassandra !== null && cassandra.connected) {
+    if (_isConnected(qb)) {
       var cql = qb.cql();
-      cassandra.stream(cql, qb.bindings(), _options)
+      qb._cassandra.stream(cql, qb.bindings(), _options)
         .on("readable", onReadable)
         .on("end", onEnd)
         .on("error", onError);
@@ -244,9 +243,9 @@ function _attachEachRowMethod(qb) {
       errorCb = _.noop;
     }
 
-    if (cassandra !== null && cassandra.connected) {
+    if (_isConnected(qb)) {
       var cql = qb.cql();
-      cassandra.eachRow(cql, qb.bindings(), _options, rowCb, errorCb);
+      qb._cassandra.eachRow(cql, qb.bindings(), _options, rowCb, errorCb);
     }
     else {
       errorCb(new Error("Cassandra client is not initialized."));
@@ -293,7 +292,7 @@ function _attachBatchMethod(qb) {
       _cb = _.noop;
     }
 
-    if (cassandra !== null && cassandra.connected) {
+    if (_isConnected(qb)) {
 
       var error = null
         , statements = _.map(_cassakni, function (qb) {
@@ -311,7 +310,7 @@ function _attachBatchMethod(qb) {
         return _cb(error);
       }
 
-      cassandra.batch(statements, _options, _cb);
+      qb._cassandra.batch(statements, _options, _cb);
     }
     else {
       _cb(new Error("Cassandra client is not initialized."));
@@ -320,6 +319,10 @@ function _attachBatchMethod(qb) {
     // maintain chain
     return qb;
   };
+}
+
+function _isConnected(qb) {
+  return qb._cassandra !== null && qb._cassandra.connected;
 }
 
 module.exports = CassanKnex;
